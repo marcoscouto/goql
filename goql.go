@@ -1,6 +1,7 @@
 package goql
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -32,14 +33,18 @@ func (g *goql) BuildSQLStatement(content string, args ...any) (query string, que
 	case MySQL, SQLite:
 		return strings.ReplaceAll(content, "%s", "?"), args
 	case SQLServer:
-		return strings.ReplaceAll(content, "%s", "@p"), args
+		return buildNumericPlaceholders(content, "@p"), args
 	case Oracle:
-		return strings.ReplaceAll(content, "%s", ":param"), args
+		return buildNumericPlaceholders(content, ":"), args
 	default:
-		result := content
-		for i := 1; i <= strings.Count(content, "%s"); i++ {
-			result = strings.Replace(result, "%s", "$"+strconv.Itoa(i), 1)
-		}
-		return result, args
+		return buildNumericPlaceholders(content, "$"), args
 	}
+}
+
+func buildNumericPlaceholders(content, prefix string) string {
+	result := content
+	for i := 1; i <= strings.Count(content, "%s"); i++ {
+		result = strings.Replace(result, "%s", fmt.Sprint(prefix, strconv.Itoa(i)), 1)
+	}
+	return result
 }
